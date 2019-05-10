@@ -10,7 +10,7 @@
     <string name="pause">Pause</string>
     <string name="start_over">Restart</string>
     <string name="remove_all">Clear</string>
-    <string name="add_new">New</string>
+    <string name="add_new">ADD NEW</string>
     <string name="get_from_db">DB</string>
     <string name="sync">Sync</string>
     <string name="title_activity_about">AboutActivity</string>

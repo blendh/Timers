@@ -30,7 +30,7 @@ public class ActionReceiver extends BroadcastReceiver {
     public void performAction1(){
         MainActivity.mainActivity.pause();
         if (MainActivity.mainActivity.pause)
-            Toast.makeText(MainActivity.mainActivity,"Timer paused.",Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.mainActivity ,"Timer paused.",Toast.LENGTH_SHORT).show();
         else
             Toast.makeText(MainActivity.mainActivity,"Timer resumed.",Toast.LENGTH_SHORT).show();
     }

@@ -117,7 +117,8 @@ public class MainActivity extends AppCompatActivity {
         Button startOverButton = (Button) findViewById(R.id.button2);
         Button removeAllButton = (Button) findViewById(R.id.button3);
         Button addNewButton = (Button) findViewById(R.id.button4);
-        Button getFromDbButton = (Button) findViewById(R.id.button5);
+        Button getFromDbButton = (Button) findViewById(R.id.button10);
+        Button syncToDbButton = (Button) findViewById(R.id.button9);
 
         addNewButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -145,13 +146,8 @@ public class MainActivity extends AppCompatActivity {
         startOverButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // startOver();
-                // mAdapter.notifyDataSetChanged();
-
-                if (ConnectivityHelper.isConnectedToNetwork(MainActivity.this))
-                    customDialogSyncChoice();
-                else
-                    Toast.makeText(MainActivity.this,"No internet connection available.", Toast.LENGTH_SHORT).show();
+                startOver();
+                mAdapter.notifyDataSetChanged();
             }
         });
 
@@ -174,6 +170,16 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this,"No internet connection available.", Toast.LENGTH_SHORT).show();
 
 
+            }
+        });
+
+        syncToDbButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (ConnectivityHelper.isConnectedToNetwork(MainActivity.this))
+                    customDialogSyncChoice();
+                else
+                    Toast.makeText(MainActivity.this,"No internet connection available.", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -623,10 +629,7 @@ public class MainActivity extends AppCompatActivity {
         return uniqueTimersList;
     }
 
-    public void start
-
-
-    Over() {
+    public void startOver() {
         for (MyTimer timer: timersList) {
             timer.setSecondsLeft(timer.getSeconds());
             timer.setInitiated(false);
@@ -668,7 +671,7 @@ public class MainActivity extends AppCompatActivity {
                                         break;
                                     }
                                 }
-                            }
+                        }
                             int index = 0;
                             for (MyTimer timer: timersList) {
                                 if (timer.isFinished()) {

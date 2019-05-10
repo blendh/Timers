@@ -141,10 +141,9 @@ public class TimersAdapter extends RecyclerView.Adapter<TimersAdapter.MyViewHold
             }
         });
 
-        builderSingle.setNeutralButton("Reset", new DialogInterface.OnClickListener() {
+        builderSingle.setNeutralButton("Start Over", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                MainActivity.mainActivity.pause();
                 timersList.get(timerPosition).setSecondsLeft(timersList.get(timerPosition).getSeconds());
                 notifyDataSetChanged();
             }
