@@ -22,6 +22,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
@@ -41,7 +42,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -51,6 +60,10 @@ public class MainActivity extends AppCompatActivity {
     private TimersAdapter mAdapter;
 
     private List<MyTimer> currentDbList = new ArrayList<>();
+
+    private List<MyTimer> currentTimerList = new ArrayList<>();
+    private List<MyTimer> currentTimers = new ArrayList<>();
+
     private List<MyTimer> toSyncList;
 
     private List<MyTimer> onDestroyList;
@@ -100,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
          * get static list or get from DB ??????
          */
         if (ConnectivityHelper.isConnectedToNetwork(MainActivity.this)) {
-            getFromDatabase();
+            getTimerListFromDB();
             Toast.makeText(MainActivity.this, "Added from DB successfully.", Toast.LENGTH_SHORT).show();
         } else
             Toast.makeText(MainActivity.this,"No internet connection available to communicate with DB.", Toast.LENGTH_SHORT).show();
@@ -164,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (ConnectivityHelper.isConnectedToNetwork(MainActivity.this)) {
-                    getFromDatabase();
+                    getTimerListFromDB();
                     Toast.makeText(MainActivity.this, "Added from DB successfully.", Toast.LENGTH_SHORT).show();
                 } else
                     Toast.makeText(MainActivity.this,"No internet connection available.", Toast.LENGTH_SHORT).show();
@@ -176,8 +189,10 @@ public class MainActivity extends AppCompatActivity {
         syncToDbButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ConnectivityHelper.isConnectedToNetwork(MainActivity.this))
+                if (ConnectivityHelper.isConnectedToNetwork(MainActivity.this)) {
+                    getCurrentTimers();
                     customDialogSyncChoice();
+                }
                 else
                     Toast.makeText(MainActivity.this,"No internet connection available.", Toast.LENGTH_SHORT).show();
             }
@@ -282,12 +297,14 @@ public class MainActivity extends AppCompatActivity {
     public void customDialogSyncChoice () {
         AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.mainActivity);
         builderSingle.setTitle("Choose sync method");
-        builderSingle.setMessage("Option 1: Add missing timers to database.\n\nOption 2: Clear database and sync current timers.");
+        builderSingle.setMessage("Option 1: Add missing timers to database and update current timer list.\n\nOption 2: Clear database and sync current timer list.");
 
         builderSingle.setNegativeButton("Option 1", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                getDatabaseList();
+                clearTimers();
+                clearTimerList();
+                syncAllTimers();
                 customDialogConfirmation1();
             }
         });
@@ -295,7 +312,9 @@ public class MainActivity extends AppCompatActivity {
         builderSingle.setPositiveButton("Option 2", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                clearDatabase();
+                clearTimers();
+                clearTimerList();
+                currentTimers.clear();
                 customDialogConfirmation2();
             }
         });
@@ -305,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void customDialogConfirmation1() {
         final AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.mainActivity);
-        builderSingle.setTitle("Add missing timers to database");
+        builderSingle.setTitle("Add missing timers to database and update current timer list");
         builderSingle.setMessage("Are you sure you want to continue?");
         builderSingle.setCancelable(false);
 
@@ -319,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
         builderSingle.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                syncUniqueToDatabase();
+                syncTimerList();
                 Toast.makeText(MainActivity.this,"Synced successfully.", Toast.LENGTH_SHORT).show();
             }
         });
@@ -329,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void customDialogConfirmation2() {
         final AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.mainActivity);
-        builderSingle.setTitle("Clear database and sync current timers");
+        builderSingle.setTitle("Clear database and sync current timer list");
         builderSingle.setMessage("Are you sure you want to continue?");
         builderSingle.setCancelable(false);
 
@@ -343,7 +362,8 @@ public class MainActivity extends AppCompatActivity {
         builderSingle.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                syncAllToDatabase();
+                syncAllTimers();
+                syncTimerList();
                 Toast.makeText(MainActivity.this,"Synced successfully.", Toast.LENGTH_SHORT).show();
             }
         });
@@ -436,41 +456,12 @@ public class MainActivity extends AppCompatActivity {
         mAdapter.notifyDataSetChanged();
     }
 
-    private void getFromDatabase() {
+    private void getTimerListFromDB() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
-
-        /*
-        // initiation
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        // request string from url
-        String url = "https://studev.groept.be/api/a18_sd502/select_from_id/1";
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                databaseData = response;
-                Log.d("respond: ", response);
-                timersList.get(2).setLabel(databaseData);
-                mAdapter.notifyDataSetChanged();
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                databaseData = "Data not received";
-                timersList.get(2).setLabel(databaseData);
-                mAdapter.notifyDataSetChanged();
-                Log.d("respond: ", "err");
-                error.printStackTrace();
-            }
-        });
-
-        // add to queue
-        queue.add(stringRequest);
-        */
 
         // JSON Array Request
-        String url2 = "https://studev.groept.be/api/a18_sd502/select_all";
+        String url2 = "https://studev.groept.be/api/a18_sd502/select_timerlist";
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url2, null, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
@@ -495,11 +486,11 @@ public class MainActivity extends AppCompatActivity {
         queue.add(jsonArrayRequest);
     }
 
-    private void clearDatabase() {
+    private void clearTimerList() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        String url = "https://studev.groept.be/api/a18_sd502/delete_all";
+        String url = "https://studev.groept.be/api/a18_sd502/delete_timerlist";
 
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, url, null, new Response.Listener<JSONArray>() {
             @Override
@@ -516,14 +507,39 @@ public class MainActivity extends AppCompatActivity {
         queue.add(jsonArrayRequest);
     }
 
-    private void syncAllToDatabase() {
+    private void clearTimers() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        String url = "https://studev.groept.be/api/a18_sd502/insert_into_withid/";
+        String url = "https://studev.groept.be/api/a18_sd502/delete_all_timers";
+
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, url, null, new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+            }
+        });
+
+        // add to queue
+        queue.add(jsonArrayRequest);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void syncAllTimers() {
+        // initiation
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        Set<MyTimer> timersSet = new HashSet<>(currentTimers);
+        timersSet.addAll(timersList);
+
+        String url = "https://studev.groept.be/api/a18_sd502/insert_into_timers_withid/";
         int id = 1;
         String url2;
-        for (MyTimer timer: timersList) {
+        for (MyTimer timer: timersSet) {
             // url2 = url + String.valueOf(timer.getSeconds()) + "/" + timer.getLabel();
             url2 = url + String.valueOf(id) + "/" + String.valueOf(timer.getSeconds()) + "/" + timer.getLabel();
 
@@ -546,20 +562,55 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void syncUniqueToDatabase() {
-        toSyncList = getUniqueElements(timersList, currentDbList);
-
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void syncTimerList() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
 
-        String url = "https://studev.groept.be/api/a18_sd502/insert_into_withid/";
+        Set<MyTimer> timersSet = new HashSet<>(currentTimers);
+        timersSet.addAll(timersList);
+        /**
+         * hhhh
+         *
+         * Sneaky solution
+         */
+        List<MyTimer> timersSetList = new ArrayList<>(timersSet);
+
+        String url = "https://studev.groept.be/api/a18_sd502/insert_into_timerlist/";
+        int id = 1;
         String url2;
-        int id = currentDbList.size() + 1;
-        for (MyTimer timer: toSyncList) {
-            url2 = url + String.valueOf(id) + "/" + String.valueOf(timer.getSeconds()) + "/" + timer.getLabel();
+        for (final MyTimer timer: timersList) {
+            if (timersSetList.stream()
+                    .anyMatch(new Predicate<MyTimer>() {
+                        @Override
+                        public boolean test(MyTimer t) {
+                            boolean checkLabel = t.getLabel().equals(timer.getLabel());
+                            boolean checkTime = t.getSeconds() == timer.getSeconds();
+                            if (checkLabel && checkTime)
+                                return true;
+                            return false;
+                        }
+            })) {
+                url2 = url + String.valueOf(id) + "/" +
+                        String.valueOf(timersSetList.indexOf(timersSetList.stream()
+                                .filter(new Predicate<MyTimer>() {
+                                    @Override
+                                    public boolean test(MyTimer t) {
+                                        boolean checkLabel = t.getLabel().equals(timer.getLabel());
+                                        boolean checkTime = t.getSeconds() == timer.getSeconds();
+                                        if (checkLabel && checkTime)
+                                            return true;
+                                        return false;
+                                    }
+                                })
+                                .findAny()
+                                .get()) + 1) + "/";
+            }
+            else
+                continue;
 
             // JSON Array Request
-            JsonArrayRequest jsonArrayRequest2 = new JsonArrayRequest(Request.Method.POST, url2, null, new Response.Listener<JSONArray>() {
+            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, url2, null, new Response.Listener<JSONArray>() {
                 @Override
                 public void onResponse(JSONArray response) {
                 }
@@ -571,30 +622,27 @@ public class MainActivity extends AppCompatActivity {
             });
 
             // add to queue
-            queue.add(jsonArrayRequest2);
-
+            queue.add(jsonArrayRequest);
             url2 = null;
             id++;
         }
-
-        currentDbList.clear();
     }
 
-    private void getDatabaseList() {
-        // dbTimersList = new ArrayList<>();
-
+    private void getCurrentTimers() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
 
+        currentTimers.clear();
+
         // JSON Array Request
-        String url2 = "https://studev.groept.be/api/a18_sd502/select_all";
+        String url2 = "https://studev.groept.be/api/a18_sd502/select_all_timers";
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url2, null, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
                 try {
                     for (int i = 0; i < response.length(); i++) {
                         JSONObject element = response.getJSONObject(i);
-                        currentDbList.add(new MyTimer(element.getInt("time"), element.getString("label")));
+                        currentTimers.add(new MyTimer(element.getInt("time"), element.getString("label")));
                     }
                     mAdapter.notifyDataSetChanged();
                 } catch (JSONException e) {

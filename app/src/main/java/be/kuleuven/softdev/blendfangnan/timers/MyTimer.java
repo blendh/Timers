@@ -1,5 +1,6 @@
 package be.kuleuven.softdev.blendfangnan.timers;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -157,5 +158,19 @@ public class MyTimer {
 
     public void setSeconds(int seconds) {
         this.seconds = seconds;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MyTimer myTimer = (MyTimer) o;
+        return seconds == myTimer.seconds &&
+                Objects.equals(label, myTimer.label);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(seconds, label);
     }
 }
