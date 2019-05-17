@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -128,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
 
         pauseButton = (Button) findViewById(R.id.button1);
         Button startOverButton = (Button) findViewById(R.id.button2);
-        Button removeAllButton = (Button) findViewById(R.id.button3);
+        Button removeAllButton = (Button) findViewById(R.id.button11);
         Button addNewButton = (Button) findViewById(R.id.button4);
         Button getFromDbButton = (Button) findViewById(R.id.button10);
         Button syncToDbButton = (Button) findViewById(R.id.button9);
@@ -755,10 +756,18 @@ public class MainActivity extends AppCompatActivity {
                                 for (MyTimer timer: timersList)
                                     timer.setActive(false);
 
-                            if (pause)
-                                pauseButton.setText("RESUME");
-                            else
-                                pauseButton.setText("PAUSE");
+                            if (pause) {
+                                //pauseButton.setText("RESUME");
+                                pauseButton.setPadding(0,20,0,0);
+                                pauseButton.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_play_arrow_white_48dp, 0, 0);
+                            }
+
+                            else {
+                                //pauseButton.setText("PAUSE");
+                                pauseButton.setPadding(0,24,0,0);
+                                pauseButton.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_pause_white_44dp, 0, 0);
+
+                            }
 
                         }
                     });

@@ -22,5 +22,6 @@
     <color name="colorAccent">#E14D43</color>
     <color name="year">#484855</color>
     <color name="title">#222222</color>
+    <color name="background">#F3F1EA</color>
 
 </resources>

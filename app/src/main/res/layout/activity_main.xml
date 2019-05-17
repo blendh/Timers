@@ -21,7 +21,7 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="?attr/actionBarSize"
-                android:layout_marginStart="216dp"
+                android:layout_marginStart="168dp"
                 android:gravity="end|center_vertical">
 
                 <!--
@@ -52,6 +52,15 @@
                     android:layout_marginEnd="0dp"
                     android:background="@color/colorPrimary"
                     android:drawableTop="@drawable/ic_cloud_download_white_32dp" />
+
+                <Button
+                    android:id="@+id/button11"
+                    style="?android:borderlessButtonStyle"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="16dp"
+                    android:background="@color/colorPrimary"
+                    android:drawableTop="@drawable/ic_clear_white_32dp" />
 
             </LinearLayout>
 
@@ -97,22 +106,25 @@
         android:layout_marginBottom="3dp">
 
         <Button
-            android:id="@+id/button1"
+            android:id="@+id/button2"
+            style="?android:borderlessButtonStyle"
             android:layout_width="@dimen/button_size"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:layout_marginTop="0dp"
-            android:text="@string/pause" />
+            android:layout_marginTop="16dp"
+            android:text="@string/start_over"/>
 
         <Button
-            android:id="@+id/button2"
-            android:layout_width="@dimen/button_size"
-            android:layout_height="wrap_content"
+            android:id="@+id/button1"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
             android:layout_alignParentTop="true"
             android:layout_marginTop="0dp"
-            android:layout_toEndOf="@id/button1"
-            android:text="@string/start_over" />
+            android:layout_toEndOf="@id/button2"
+            android:background="@drawable/roundbutton"
+            android:paddingTop="8dp" />
 
+        <!--
         <Button
             android:id="@+id/button3"
             android:layout_width="@dimen/button_size"
@@ -121,15 +133,17 @@
             android:layout_marginTop="0dp"
             android:layout_toEndOf="@id/button2"
             android:text="@string/remove_all" />
+        -->
 
         <Button
             android:id="@+id/button4"
+            style="?android:borderlessButtonStyle"
             android:layout_width="@dimen/button_size"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:layout_marginTop="0dp"
-            android:layout_toEndOf="@id/button3"
-            android:text="@string/add_new" />
+            android:layout_marginTop="16dp"
+            android:layout_toEndOf="@id/button1"
+            android:text="@string/add_new"/>
 
     </RelativeLayout>
 

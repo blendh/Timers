@@ -30,7 +30,7 @@
         android:includeFontPadding="false"
         android:layout_alignBottom="@id/currentTextView"
         android:layout_alignTop="@id/currentTextView"
-        android:textColor="@color/year"
+        android:textColor="@color/title"
         android:textSize="24sp"
         android:gravity="center_vertical" />
 
