@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.media.Ringtone;
@@ -82,9 +83,8 @@ public class MainActivity extends AppCompatActivity {
     Button pauseButton;
     public boolean pause = true;
 
-    /**
-     * Singleton can be used for better practice
-     */
+
+
     static MainActivity mainActivity;
 
     @Override
@@ -119,6 +119,18 @@ public class MainActivity extends AppCompatActivity {
         } else
             Toast.makeText(MainActivity.this,"No internet connection available to communicate with DB.", Toast.LENGTH_SHORT).show();
         //prepareTimerData();
+
+        /**
+         * check if app is opened for the first time to display instructions
+         */
+/*
+        final String PREFS_NAME = "MyPrefsFiles";
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, 0);
+        if (sharedPreferences.getBoolean("firstTime", true)) {
+            customDialogFirstTimeOpened();
+            sharedPreferences.edit().putBoolean("firstTime", false).commit();
+        }
+*/
 
 
         /** Update Everything **/
@@ -232,6 +244,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void customDialogFirstTimeOpened() {
+        final AlertDialog.Builder builderSingle = new AlertDialog.Builder(MainActivity.mainActivity);
+        builderSingle.setTitle("Hi, welcome to Timers!");
+        builderSingle.setMessage("Instructions on how to use the app can be found by clicking in the three dots in the top right corner of the screen.");
+        builderSingle.setCancelable(false);
+
+        builderSingle.setNegativeButton("No, thank you", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Toast.makeText(MainActivity.this,"Operation canceled.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builderSingle.setPositiveButton("Show instructions", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(MainActivity.this, AboutActivity.class);
+                startActivity(intent);
+                Toast.makeText(MainActivity.this,"Synced successfully.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builderSingle.show();
     }
 
     public void customDialogAddTimer() {
@@ -720,7 +757,20 @@ public class MainActivity extends AppCompatActivity {
                                         break;
                                     }
                                 }
-                        }
+                            }
+
+                            if (pause) {
+                                //pauseButton.setText("RESUME");
+                                pauseButton.setPadding(0,20,0,0);
+                                pauseButton.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_play_arrow_white_48dp, 0, 0);
+                            }
+
+                            else {
+                                //pauseButton.setText("PAUSE");
+                                pauseButton.setPadding(0,24,0,0);
+                                pauseButton.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_pause_white_44dp, 0, 0);
+                            }
+
                             int index = 0;
                             for (MyTimer timer: timersList) {
                                 if (timer.isFinished()) {
@@ -756,18 +806,7 @@ public class MainActivity extends AppCompatActivity {
                                 for (MyTimer timer: timersList)
                                     timer.setActive(false);
 
-                            if (pause) {
-                                //pauseButton.setText("RESUME");
-                                pauseButton.setPadding(0,20,0,0);
-                                pauseButton.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_play_arrow_white_48dp, 0, 0);
-                            }
 
-                            else {
-                                //pauseButton.setText("PAUSE");
-                                pauseButton.setPadding(0,24,0,0);
-                                pauseButton.setCompoundDrawablesWithIntrinsicBounds(0, R.drawable.ic_pause_white_44dp, 0, 0);
-
-                            }
 
                         }
                     });
