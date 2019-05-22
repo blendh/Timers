@@ -4,4 +4,5 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="row_padding_vertical">10dp</dimen>
     <dimen name="button_size">172dp</dimen>
+    <dimen name="image_max_width">256dp</dimen>
 </resources>

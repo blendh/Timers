@@ -15,4 +15,14 @@
     <string name="sync">Sync</string>
     <string name="title_activity_about">AboutActivity</string>
     <string name="about_app">About app</string>
+    <string name="screenshot">Screenshot</string>
+    <string name="sc_1">First, a timer has two elements, a time and a label. Both the time and the
+        label can be set by the user when the timer is created. You can also edit these values
+        later by clicking on each timer.</string>
+    <string name="sc_2">Sync to Database: Synchronizes the current timer list to database. When
+        clicked, it displays the different possible synchronization choices.\nGet from Database:
+        Downloads and updates the current timer list to the last saved list.\nClear list: Clears
+        the current timer list.\nOptions: Displays an extra list of options e.g. About App.
+    </string>
+    <string name="sc_3">Play/Pause: Resumes or pauses the current running timer</string>
 </resources>
