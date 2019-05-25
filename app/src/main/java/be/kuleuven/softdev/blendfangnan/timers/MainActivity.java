@@ -10,13 +10,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
@@ -24,7 +22,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
@@ -44,48 +41,26 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 
 public class MainActivity extends AppCompatActivity {
 
     private List<MyTimer> timersList = new ArrayList<>();
+    private List<MyTimer> currentTimers = new ArrayList<>();
     private RecyclerView recyclerView;
     private TimersAdapter mAdapter;
-
-    private List<MyTimer> currentDbList = new ArrayList<>();
-
-    private List<MyTimer> currentTimerList = new ArrayList<>();
-    private List<MyTimer> currentTimers = new ArrayList<>();
-
-    private List<MyTimer> toSyncList;
-
-    private List<MyTimer> onDestroyList;
-
     NotificationManager mNotificationManager;
     Notification.Builder mBuilder;
-
-    int currentIndex;
-
+    static MainActivity mainActivity;
+    public boolean pause = true;
+    Button pauseButton;
     MyTimer myTimer1;
-
     Integer receivedTime;
     String receivedLabel;
-
-    Button pauseButton;
-    public boolean pause = true;
-
-
-
-    static MainActivity mainActivity;
+    int currentIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
+        mainActivity = MainActivity.this;
 
         /**
          * Notify MainActivity class that something is happening in the Adapter class.
@@ -111,13 +87,14 @@ public class MainActivity extends AppCompatActivity {
         itemTouchHelper.attachToRecyclerView(recyclerView);
 
         /**
-         * get static list or get from DB ??????
+         * get from DB
          */
         if (ConnectivityHelper.isConnectedToNetwork(MainActivity.this)) {
             getTimerListFromDB();
             Toast.makeText(MainActivity.this, "Added from DB successfully.", Toast.LENGTH_SHORT).show();
-        } else
+        } else {
             Toast.makeText(MainActivity.this,"No internet connection available to communicate with DB.", Toast.LENGTH_SHORT).show();
+        }
         //prepareTimerData();
 
         /**
@@ -132,12 +109,10 @@ public class MainActivity extends AppCompatActivity {
         }
 */
 
-
         /** Update Everything **/
         Update update = new Update();
         new Thread(update).start();
 
-        mainActivity = MainActivity.this;
 
         pauseButton = (Button) findViewById(R.id.button1);
         Button startOverButton = (Button) findViewById(R.id.button2);
@@ -145,13 +120,6 @@ public class MainActivity extends AppCompatActivity {
         Button addNewButton = (Button) findViewById(R.id.button4);
         Button getFromDbButton = (Button) findViewById(R.id.button10);
         Button syncToDbButton = (Button) findViewById(R.id.button9);
-
-        addNewButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                customDialogAddTimer();
-            }
-        });
 
         pauseButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -165,9 +133,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /**
-         *
          * getDatabaseList() function can be called in the thread update
-         *
          */
         startOverButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -186,6 +152,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        addNewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                customDialogAddTimer();
+            }
+        });
+
         getFromDbButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -194,8 +167,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Added from DB successfully.", Toast.LENGTH_SHORT).show();
                 } else
                     Toast.makeText(MainActivity.this,"No internet connection available.", Toast.LENGTH_SHORT).show();
-
-
             }
         });
 
@@ -244,6 +215,22 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void startOver() {
+        for (MyTimer timer: timersList) {
+            timer.setSecondsLeft(timer.getSeconds());
+            timer.setInitiated(false);
+            timer.setActive(false);
+        }
+        pause = true;
+    }
+
+    public void pause() {
+        if (pause)
+            pause = false;
+        else
+            pause = true;
     }
 
     public void customDialogFirstTimeOpened() {
@@ -409,7 +396,6 @@ public class MainActivity extends AppCompatActivity {
         builderSingle.show();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
     public void customNotification() {
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -524,6 +510,38 @@ public class MainActivity extends AppCompatActivity {
         queue.add(jsonArrayRequest);
     }
 
+    private void getCurrentTimers() {
+        // initiation
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        currentTimers.clear();
+
+        // JSON Array Request
+        String url2 = "https://studev.groept.be/api/a18_sd502/select_all_timers";
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url2, null, new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+                try {
+                    for (int i = 0; i < response.length(); i++) {
+                        JSONObject element = response.getJSONObject(i);
+                        currentTimers.add(new MyTimer(element.getInt("time"), element.getString("label")));
+                    }
+                    mAdapter.notifyDataSetChanged();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+            }
+        });
+
+        // add to queue
+        queue.add(jsonArrayRequest);
+    }
+
     private void clearTimerList() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -566,7 +584,6 @@ public class MainActivity extends AppCompatActivity {
         queue.add(jsonArrayRequest);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     private void syncAllTimers() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -600,18 +617,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
+    // @RequiresApi(api = Build.VERSION_CODES.N)
+
     private void syncTimerList() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
 
         Set<MyTimer> timersSet = new HashSet<>(currentTimers);
         timersSet.addAll(timersList);
-        /**
-         * hhhh
-         *
-         * Sneaky solution
-         */
         List<MyTimer> timersSetList = new ArrayList<>(timersSet);
 
         String url = "https://studev.groept.be/api/a18_sd502/insert_into_timerlist/";
@@ -666,38 +679,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void getCurrentTimers() {
-        // initiation
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        currentTimers.clear();
-
-        // JSON Array Request
-        String url2 = "https://studev.groept.be/api/a18_sd502/select_all_timers";
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url2, null, new Response.Listener<JSONArray>() {
-            @Override
-            public void onResponse(JSONArray response) {
-                try {
-                    for (int i = 0; i < response.length(); i++) {
-                        JSONObject element = response.getJSONObject(i);
-                        currentTimers.add(new MyTimer(element.getInt("time"), element.getString("label")));
-                    }
-                    mAdapter.notifyDataSetChanged();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.printStackTrace();
-            }
-        });
-
-        // add to queue
-        queue.add(jsonArrayRequest);
-    }
-
     private List<MyTimer> getUniqueElements(List<MyTimer> list1, List<MyTimer> list2) {
         List<MyTimer> uniqueTimersList = new ArrayList<>();
         int count = 0;
@@ -713,22 +694,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return uniqueTimersList;
-    }
-
-    public void startOver() {
-        for (MyTimer timer: timersList) {
-            timer.setSecondsLeft(timer.getSeconds());
-            timer.setInitiated(false);
-            timer.setActive(false);
-        }
-        pause = true;
-    }
-
-    public void pause() {
-        if (pause)
-            pause = false;
-        else
-            pause = true;
     }
 
     /**

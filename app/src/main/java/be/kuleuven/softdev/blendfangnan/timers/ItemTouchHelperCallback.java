@@ -5,8 +5,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 
-import java.sql.Time;
-
 public class ItemTouchHelperCallback extends ItemTouchHelper.SimpleCallback {
 
     private TimersAdapter mAdapter;

@@ -2,12 +2,12 @@ package be.kuleuven.softdev.blendfangnan.timers;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
@@ -19,23 +19,60 @@ import java.util.List;
 public class TimersAdapter extends RecyclerView.Adapter<TimersAdapter.MyViewHolder> implements ItemTouchHelperAdapter {
 
     private List<MyTimer> timersList;
-
-    int timerPosition;
-
-    String receivedLabel;
-    int receivedTime;
-
-    MyTimer mRecentlyDeletedItem;
+    private int timerPosition;
+    private String receivedLabel;
+    private int receivedTime;
+    private MyTimer mRecentlyDeletedItem;
     int mRecentlyDeletedItemPosition;
 
-    /**
-     * This method has to be adjusted due to problems it has with update every 1000ms.
-     *
-     * !!!!!!!!!!!!!!!!!!!!!!!!
-     *
-     * @param fromPosition
-     * @param toPosition
-     */
+    TimersAdapter(List<MyTimer> timersList) {
+        this.timersList = timersList;
+    }
+
+    public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        TextView currentTextView;
+        TextView label;
+
+        MyViewHolder(View view) {
+            super(view);
+            currentTextView = (TextView) view.findViewById(R.id.currentTextView);
+            label = (TextView) view.findViewById(R.id.label);
+
+            view.setOnClickListener(this);
+        }
+
+        public void onClick(View view) {
+            MyTimer myTimer = timersList.get(getAdapterPosition());
+            customDialog("Timer " + String.valueOf(getAdapterPosition() + 1) + ": " + myTimer.getLabel());
+            timerPosition = getAdapterPosition();
+        }
+    }
+
+    @NonNull
+    @Override
+    public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.timers_list_row, parent, false);
+        return new MyViewHolder(itemView);
+    }
+
+    @Override
+    public void onBindViewHolder(MyViewHolder holder, int position) {
+        MyTimer myTimer = timersList.get(holder.getLayoutPosition());
+
+        holder.currentTextView.setText(String.valueOf(myTimer.showSecondsLeftProperly()));
+        holder.label.setText(myTimer.getLabel());
+    }
+
+    @Override
+    public int getItemCount() {
+        return timersList.size();
+    }
+
+    public int getTimerPosition() {
+        return timerPosition;
+    }
 
     @Override
     public void onItemMove(int fromPosition, int toPosition) {
@@ -58,39 +95,34 @@ public class TimersAdapter extends RecyclerView.Adapter<TimersAdapter.MyViewHold
         deleteItem(position);
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-
-        public TextView currentTextView;
-        public TextView label;
-        public Button startButton;
-        public Button deleteButton;
-        public MyViewHolder(View view) {
-            super(view);
-            currentTextView = (TextView) view.findViewById(R.id.currentTextView);
-            label = (TextView) view.findViewById(R.id.label);
-
-            view.setOnClickListener(this);
-        }
-
-        public void onClick(View view) {
-            MyTimer myTimer = timersList.get(getAdapterPosition());
-            customDialog("Timer " + String.valueOf(getAdapterPosition() + 1) + ": " + myTimer.getLabel());
-            timerPosition = getAdapterPosition();
-        }
-
-
-
+    private void deleteItem(int position) {
+        mRecentlyDeletedItem = timersList.get(position);
+        mRecentlyDeletedItemPosition = position;
+        timersList.remove(position);
+        notifyItemRemoved(position);
+        showUndoSnackbar();
     }
 
-    public void customDialog (String title) {
+    private void showUndoSnackbar() {
+        View view = MainActivity.mainActivity.findViewById(R.id.recycler_view);
+        Snackbar snackbar = Snackbar.make(view, "You just deleted a timer.",
+                Snackbar.LENGTH_LONG);
+        snackbar.setAction("Undo", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                undoDelete();
+            }
+        });
+        snackbar.show();
+    }
 
-        /**
-         * https://stackoverflow.com/questions/12876624/multiple-edittext-objects-in-alertdialog
-         *
-         * Use Layout Inflater - for better practice
-         *
-         * DONE
-         */
+    private void undoDelete() {
+        timersList.add(mRecentlyDeletedItemPosition,
+                mRecentlyDeletedItem);
+        notifyItemInserted(mRecentlyDeletedItemPosition);
+    }
+
+    private void customDialog(String title) {
 
         LayoutInflater factory = LayoutInflater.from(MainActivity.mainActivity);
         View textEntryView = factory.inflate(R.layout.alert_dialog, null);
@@ -150,99 +182,5 @@ public class TimersAdapter extends RecyclerView.Adapter<TimersAdapter.MyViewHold
         });
 
         builderSingle.show();
-    }
-
-
-    /**
-     * https://medium.com/@zackcosborn/step-by-step-recyclerview-swipe-to-delete-and-undo-7bbae1fce27e
-     *
-     * Look for swipe to delete
-     */
-
-
-    public TimersAdapter(List<MyTimer> timersList) {
-        this.timersList = timersList;
-    }
-
-    @Override
-    public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.timers_list_row, parent, false);
-        return new MyViewHolder(itemView);
-    }
-
-    @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
-        MyTimer myTimer = timersList.get(holder.getLayoutPosition());
-
-        /**
-        if (myTimer.isInitiated())
-            holder.currentTextView.setText(String.valueOf(myTimer.showSecondsLeftProperly()));
-        else
-            holder.currentTextView.setText(String.valueOf(myTimer.showSecondsProperly()));
-        */
-
-        holder.currentTextView.setText(String.valueOf(myTimer.showSecondsLeftProperly()));
-        holder.label.setText(myTimer.getLabel());
-    }
-
-    @Override
-    public int getItemCount() {
-        return timersList.size();
-    }
-
-    public int getTimerPosition() {
-        return timerPosition;
-    }
-
-    public void deleteItem(int position) {
-        mRecentlyDeletedItem = timersList.get(position);
-        mRecentlyDeletedItemPosition = position;
-        timersList.remove(position);
-        notifyItemRemoved(position);
-        showUndoSnackbar();
-    }
-
-    private void showUndoSnackbar() {
-        View view = MainActivity.mainActivity.findViewById(R.id.recycler_view);
-        Snackbar snackbar = Snackbar.make(view, "You just deleted a timer.",
-                Snackbar.LENGTH_LONG);
-        snackbar.setAction("Undo", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                undoDelete();
-            }
-        });
-        snackbar.show();
-    }
-
-    private void undoDelete() {
-        timersList.add(mRecentlyDeletedItemPosition,
-                mRecentlyDeletedItem);
-        notifyItemInserted(mRecentlyDeletedItemPosition);
-    }
-
-    class Update implements Runnable {
-
-
-        public Update() {
-        }
-
-        public void run() {
-            try {
-                while (!(new Thread(this).isInterrupted())) {
-                    Thread.sleep(1000);
-                    MainActivity.mainActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            timersList.get(1).setSecondsLeft(timersList.get(1).getSecondsLeft() - 1);
-                            notifyDataSetChanged();
-
-                        }
-                    });
-                }
-            } catch (InterruptedException e1) {
-            }
-        }
     }
 }
