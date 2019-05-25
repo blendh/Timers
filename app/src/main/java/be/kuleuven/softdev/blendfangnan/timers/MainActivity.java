@@ -100,14 +100,12 @@ public class MainActivity extends AppCompatActivity {
         /**
          * check if app is opened for the first time to display instructions
          */
-/*
-        final String PREFS_NAME = "MyPrefsFiles";
-        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, 0);
-        if (sharedPreferences.getBoolean("firstTime", true)) {
+        final String PREFS_NAME = "Preference";
+        Boolean isFirstRun = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean("isFirstRun", true);
+        if (isFirstRun) {
             customDialogFirstTimeOpened();
-            sharedPreferences.edit().putBoolean("firstTime", false).commit();
+            getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit().putBoolean("isFirstRun", false).commit();
         }
-*/
 
         /** Update Everything **/
         Update update = new Update();
