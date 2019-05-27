@@ -615,8 +615,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // @RequiresApi(api = Build.VERSION_CODES.N)
-
     private void syncTimerList() {
         // initiation
         RequestQueue queue = Volley.newRequestQueue(this);
